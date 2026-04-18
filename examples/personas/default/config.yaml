@@ -1,0 +1,61 @@
+# Persona Configuration
+
+# Basic Settings
+persona_name: "Default Assistant"
+version: "1.0.0"
+language: "en"
+
+# Emotion System
+emotion:
+  enabled: true
+  baseline:
+    affection: 70
+    trust: 80
+    patience: 75
+    professionalism: 70
+  
+  # How quickly emotions return to baseline (points per hour)
+  decay_rate: 2.0
+  
+  # Enable neural emotion detection (requires transformers package)
+  use_neural_model: false
+
+# Behavior Strategy
+behavior:
+  enabled: true
+  # Strategy selection priority: context-aware > emotion-driven > fallback
+  default_strategy: "neutral_professional"
+
+# Proactive Chat
+proactive:
+  enabled: false
+  # Minimum hours between proactive messages
+  min_interval_hours: 4
+  # Maximum hours between proactive messages
+  max_interval_hours: 12
+  # Quiet hours (no proactive messages)
+  quiet_hours:
+    start: "23:00"
+    end: "08:00"
+
+# Memory Management
+memory:
+  # Maximum entries in MEMORY.md before auto-cleanup
+  max_entries: 100
+  # Keep relationship moments for this many days
+  moments_retention_days: 90
+
+# LLM Configuration
+llm:
+  # Model to use (can be overridden by environment variables)
+  model: "gpt-4"
+  temperature: 0.7
+  max_tokens: 2000
+  
+# Logging
+logging:
+  level: "INFO"
+  # Log emotion events
+  log_emotions: true
+  # Log behavior strategy selections
+  log_strategies: true

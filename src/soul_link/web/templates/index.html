@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soul-Link Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔗 Soul-Link</h1>
+            <p class="subtitle">AI Agent Personality & Emotion System</p>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab active" data-tab="emotion">情绪状态</button>
+            <button class="tab" data-tab="persona">人格文件</button>
+            <button class="tab" data-tab="moments">关系记忆</button>
+            <button class="tab" data-tab="config">系统配置</button>
+            <button class="tab" data-tab="test">测试对话</button>
+        </nav>
+
+        <!-- Emotion State Tab -->
+        <section id="tab-emotion" class="tab-content active">
+            <h2>当前情绪状态</h2>
+            <div class="emotion-grid">
+                <div class="emotion-card">
+                    <label>好感度 (Affection)</label>
+                    <div class="bar-container">
+                        <div class="bar bar-affection" id="bar-affection"></div>
+                    </div>
+                    <span class="value" id="val-affection">--</span>
+                    <input type="range" min="0" max="100" id="slider-affection" class="slider">
+                </div>
+                <div class="emotion-card">
+                    <label>信任度 (Trust)</label>
+                    <div class="bar-container">
+                        <div class="bar bar-trust" id="bar-trust"></div>
+                    </div>
+                    <span class="value" id="val-trust">--</span>
+                    <input type="range" min="0" max="100" id="slider-trust" class="slider">
+                </div>
+                <div class="emotion-card">
+                    <label>占有欲 (Possessiveness)</label>
+                    <div class="bar-container">
+                        <div class="bar bar-possessiveness" id="bar-possessiveness"></div>
+                    </div>
+                    <span class="value" id="val-possessiveness">--</span>
+                    <input type="range" min="0" max="100" id="slider-possessiveness" class="slider">
+                </div>
+                <div class="emotion-card">
+                    <label>耐心值 (Patience)</label>
+                    <div class="bar-container">
+                        <div class="bar bar-patience" id="bar-patience"></div>
+                    </div>
+                    <span class="value" id="val-patience">--</span>
+                    <input type="range" min="0" max="100" id="slider-patience" class="slider">
+                </div>
+            </div>
+            <div class="emotion-score">
+                <span>综合情绪分值: <strong id="emotion-score">--</strong> / 5.00</span>
+            </div>
+            <button class="btn btn-primary" id="btn-save-emotion">保存情绪修改</button>
+            <button class="btn" id="btn-refresh-emotion">刷新</button>
+        </section>
+
+        <!-- Persona Files Tab -->
+        <section id="tab-persona" class="tab-content">
+            <h2>人格文件编辑</h2>
+            <div class="persona-selector">
+                <button class="btn btn-sm active" data-file="SOUL.md">SOUL.md</button>
+                <button class="btn btn-sm" data-file="USER.md">USER.md</button>
+                <button class="btn btn-sm" data-file="MEMORY.md">MEMORY.md</button>
+                <button class="btn btn-sm" data-file="STATE.md">STATE.md (只读)</button>
+                <button class="btn btn-sm" data-file="MOMENTS.md">MOMENTS.md (只读)</button>
+            </div>
+            <div class="file-info">
+                <span id="file-name">SOUL.md</span>
+                <span id="file-size"></span>
+            </div>
+            <textarea id="persona-editor" rows="20" placeholder="加载中..."></textarea>
+            <button class="btn btn-primary" id="btn-save-persona">保存</button>
+            <span id="save-status"></span>
+        </section>
+
+        <!-- Moments Tab -->
+        <section id="tab-moments" class="tab-content">
+            <h2>关系记忆</h2>
+            <div class="moments-list" id="moments-list">
+                <p>加载中...</p>
+            </div>
+            <button class="btn" id="btn-refresh-moments">刷新</button>
+        </section>
+
+        <!-- Config Tab -->
+        <section id="tab-config" class="tab-content">
+            <h2>系统配置</h2>
+            <div class="config-section">
+                <h3>LLM 设置</h3>
+                <div class="form-group">
+                    <label>Provider</label>
+                    <select id="cfg-llm-provider">
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Model</label>
+                    <input type="text" id="cfg-llm-model" placeholder="gpt-4o">
+                </div>
+                <div class="form-group">
+                    <label>API Key</label>
+                    <input type="password" id="cfg-llm-apikey" placeholder="sk-...">
+                </div>
+                <div class="form-group">
+                    <label>Base URL</label>
+                    <input type="text" id="cfg-llm-baseurl" placeholder="https://api.openai.com/v1">
+                </div>
+            </div>
+            <div class="config-section">
+                <h3>情绪系统</h3>
+                <div class="form-group">
+                    <label><input type="checkbox" id="cfg-emotion-enabled" checked> 启用情绪系统</label>
+                </div>
+                <div class="form-group">
+                    <label>衰减速率 (点/小时)</label>
+                    <input type="number" id="cfg-emotion-decay" value="2.0" step="0.5" min="0">
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="cfg-neural-enabled"> 启用神经情绪融合 (需要 transformers)</label>
+                </div>
+            </div>
+            <div class="config-section">
+                <h3>行为策略</h3>
+                <div class="form-group">
+                    <label><input type="checkbox" id="cfg-behavior-enabled" checked> 启用行为策略层</label>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="btn-save-config">保存配置</button>
+            <span id="config-status"></span>
+        </section>
+
+        <!-- Test Chat Tab -->
+        <section id="tab-test" class="tab-content">
+            <h2>对话测试</h2>
+            <p class="hint">发送消息测试情绪检测和行为策略（不会实际调用 LLM）</p>
+            <div class="chat-area">
+                <div id="chat-log" class="chat-log"></div>
+                <div class="chat-input">
+                    <input type="text" id="chat-input" placeholder="输入测试消息..." autocomplete="off">
+                    <button class="btn btn-primary" id="btn-send">发送</button>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>Soul-Link v0.1.0 · AGPL-3.0 · Not playing a role, but being alive.</p>
+        </footer>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

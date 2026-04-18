@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  soul-link:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: soul-link
+    ports:
+      - "8080:8080"
+    volumes:
+      # Persist persona files and data
+      - ./data:/data
+      # Optional: mount custom personas
+      - ./examples/personas:/data/personas:ro
+    environment:
+      # LLM API Configuration
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4}
+      
+      # Soul-Link Configuration
+      - SOUL_LINK_HOME=/data
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      
+      # Optional: Neural emotion model
+      - USE_NEURAL_EMOTION=${USE_NEURAL_EMOTION:-false}
+      
+      # Optional: Telegram bot
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_ALLOWED_USERS=${TELEGRAM_ALLOWED_USERS:-}
+      
+      # Optional: Discord bot
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN:-}
+      - DISCORD_ALLOWED_GUILDS=${DISCORD_ALLOWED_GUILDS:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8080/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Neural emotion model service (uncomment to enable)
+  # emotion-model:
+  #   image: huggingface/transformers-pytorch-cpu:latest
+  #   container_name: soul-link-emotion
+  #   volumes:
+  #     - ./models:/models
+  #   environment:
+  #     - MODEL_PATH=/models/Chinese-Emotion-Small
+  #   ports:
+  #     - "8081:8081"
+  #   command: python -m transformers.models.auto.modeling_auto --model /models/Chinese-Emotion-Small --port 8081
+
+volumes:
+  data:
+    driver: local

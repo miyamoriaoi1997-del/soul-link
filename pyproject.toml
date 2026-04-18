@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "soul-link"
+version = "0.1.0"
+description = "Give your AI agent a soul — persistent personality, dynamic emotions, proactive behavior, and relationship memory."
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+requires-python = ">=3.10"
+authors = [
+    { name = "Soul-Link Contributors" },
+]
+keywords = ["ai", "agent", "personality", "emotion", "llm", "chatbot"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "openai>=1.0.0",
+    "pyyaml>=6.0",
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.20.0",
+    "jinja2>=3.1.0",
+    "httpx>=0.24.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+telegram = ["python-telegram-bot>=20.0"]
+discord = ["discord.py>=2.0"]
+neural = ["transformers>=4.30.0", "torch>=2.0.0"]
+all = ["soul-link[telegram,discord,neural]"]
+dev = ["pytest>=7.0", "pytest-asyncio>=0.21", "ruff>=0.1.0"]
+
+[project.urls]
+Homepage = "https://github.com/soul-link-ai/soul-link"
+Documentation = "https://github.com/soul-link-ai/soul-link/tree/main/docs"
+Repository = "https://github.com/soul-link-ai/soul-link"
+Issues = "https://github.com/soul-link-ai/soul-link/issues"
+
+[project.scripts]
+soul-link = "soul_link.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/soul_link"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

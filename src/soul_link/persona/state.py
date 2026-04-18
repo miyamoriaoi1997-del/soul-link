@@ -261,7 +261,7 @@ class EmotionStateManager:
             # Skip if rule signal is already strong (|rule_score| >= 2)
             continuous_score = 0.0
             if abs(rule_score) < 2.0 and self.detector._analyzer is not None:
-                from soul_link.sentiment_analyzer import SentimentAnalyzer
+                from soul_link.emotion.analyzer import SentimentAnalyzer
                 user_messages = [m for m in messages if m.get("role") == "user"]
                 if user_messages:
                     user_text = self.detector._extract_text(

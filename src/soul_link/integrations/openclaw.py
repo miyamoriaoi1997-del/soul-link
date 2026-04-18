@@ -53,10 +53,9 @@ class OpenClawAdapter:
         
         # Load persona
         self.loader = PersonaLoader(str(self.persona_path))
-        self.persona = self.loader.load()
         
         # Initialize emotion system
-        self.emotion_detector = EmotionDetector(use_neural_model=use_neural_emotion)
+        self.emotion_detector = EmotionDetector(use_model=use_neural_emotion)
         self.emotion_calculator = EmotionCalculator()
         self.state_manager = EmotionStateManager(str(self.data_dir))
         
@@ -76,30 +75,37 @@ class OpenClawAdapter:
         parts = []
         
         # Core personality
-        if self.persona.soul:
-            parts.append(f"# Core Personality\n\n{self.persona.soul}")
+        soul = self.loader.load_soul()
+        if soul:
+            parts.append(f"# Core Personality\n\n{soul}")
         
         # User profile
-        if self.persona.user:
-            parts.append(f"\n# User Profile\n\n{self.persona.user}")
+        user = self.loader.load_user()
+        if user:
+            parts.append(f"\n# User Profile\n\n{user}")
         
         # Long-term memory
-        if self.persona.memory:
-            parts.append(f"\n# Memory\n\n{self.persona.memory}")
+        memory = self.loader.load_memory()
+        if memory:
+            parts.append(f"\n# Memory\n\n{memory}")
         
         # Current emotional state
-        state = self.state_manager.get_current_state()
+        state = self.state_manager.get_current_emotion_state()
         emotion_prompt = self._build_emotion_prompt(state)
         if emotion_prompt:
             parts.append(f"\n{emotion_prompt}")
         
         # Behavior directive
-        directive = self.behavior_controller.get_behavior_directive(
-            messages=messages,
+        from soul_link.emotion.models import EmotionState
+        emotion_state = EmotionState(
             affection=state["affection"],
             trust=state["trust"],
             possessiveness=state["possessiveness"],
             patience=state["patience"]
+        )
+        directive = self.behavior_controller.get_behavior_directive(
+            emotion_state=emotion_state,
+            messages=messages
         )
         if directive:
             parts.append(f"\n{directive}")
@@ -140,7 +146,7 @@ class OpenClawAdapter:
         self.state_manager.update_emotion_state(messages)
         
         # Get updated state
-        state = self.state_manager.get_current_state()
+        state = self.state_manager.get_current_emotion_state()
         
         return {
             "emotion_state": state,
@@ -154,7 +160,7 @@ class OpenClawAdapter:
         Returns:
             Dict with affection, trust, possessiveness, patience
         """
-        state = self.state_manager.get_current_state()
+        state = self.state_manager.get_current_emotion_state()
         return {
             "affection": state["affection"],
             "trust": state["trust"],
@@ -207,12 +213,7 @@ class OpenClawAdapter:
     
     def _build_emotion_prompt(self, state: Dict[str, Any]) -> str:
         """Build emotion modifier prompt."""
-        tone_modifiers = self.emotion_calculator.get_tone_modifiers(
-            state["affection"],
-            state["trust"],
-            state["possessiveness"],
-            state["patience"]
-        )
+        tone_modifiers = self.emotion_calculator.get_tone_modifiers(state)
         
         if not tone_modifiers:
             return ""

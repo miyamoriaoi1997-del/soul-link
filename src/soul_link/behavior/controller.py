@@ -99,7 +99,9 @@ class BehaviorStrategyController:
         if not user_msgs:
             return context
 
-        last_msg = user_msgs[-1].get("content", "").lower()
+        # Ensure content is string (defensive)
+        content = user_msgs[-1].get("content", "")
+        last_msg = content.lower() if isinstance(content, str) else ""
 
         # ── Detect task type from last message ──────────────────
         technical_keywords = [
@@ -182,7 +184,8 @@ class BehaviorStrategyController:
 
         # 5. Intimacy → work transition (needs 2+ messages)
         if len(user_msgs) >= 2:
-            prev_msg = user_msgs[-2].get("content", "").lower()
+            prev_content = user_msgs[-2].get("content", "")
+            prev_msg = prev_content.lower() if isinstance(prev_content, str) else ""
 
             intimacy_keywords = [
                 "喜欢", "爱", "想你", "抱", "亲", "陪我",

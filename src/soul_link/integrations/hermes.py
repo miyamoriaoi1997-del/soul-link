@@ -54,10 +54,9 @@ class HermesAdapter:
         
         # Load persona
         self.loader = PersonaLoader(str(self.persona_path))
-        self.persona = self.loader.load()
         
         # Initialize emotion system
-        self.emotion_detector = EmotionDetector(use_neural_model=use_neural_emotion)
+        self.emotion_detector = EmotionDetector(use_model=use_neural_emotion)
         self.emotion_calculator = EmotionCalculator()
         self.state_manager = EmotionStateManager(str(self.hermes_home))
         
@@ -72,9 +71,9 @@ class HermesAdapter:
             Dict with keys: soul, user, memory, state, moments
         """
         return {
-            "soul": self.persona.soul,
-            "user": self.persona.user,
-            "memory": self.persona.memory,
+            "soul": self.loader.load_soul(),
+            "user": self.loader.load_user(),
+            "memory": self.loader.load_memory(),
             "state": self._get_state_content(),
             "moments": self._get_recent_moments()
         }
@@ -89,13 +88,8 @@ class HermesAdapter:
         Returns:
             Emotion modifier prompt string
         """
-        state = self.state_manager.get_current_state()
-        tone_modifiers = self.emotion_calculator.get_tone_modifiers(
-            state["affection"],
-            state["trust"],
-            state["possessiveness"],
-            state["patience"]
-        )
+        state = self.state_manager.get_current_emotion_state()
+        tone_modifiers = self.emotion_calculator.get_tone_modifiers(state)
         
         return self._format_emotion_modifier(tone_modifiers)
     
@@ -109,14 +103,20 @@ class HermesAdapter:
         Returns:
             Behavior directive prompt string
         """
-        state = self.state_manager.get_current_state()
+        state = self.state_manager.get_current_emotion_state()
         
-        directive = self.behavior_controller.get_behavior_directive(
-            messages=messages,
+        # Convert dict to EmotionState object
+        from soul_link.emotion.models import EmotionState
+        emotion_state = EmotionState(
             affection=state["affection"],
             trust=state["trust"],
             possessiveness=state["possessiveness"],
             patience=state["patience"]
+        )
+        
+        directive = self.behavior_controller.get_behavior_directive(
+            emotion_state=emotion_state,
+            messages=messages
         )
         
         return directive if directive else ""

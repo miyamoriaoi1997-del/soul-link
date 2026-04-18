@@ -1,0 +1,11 @@
+{
+  "next_contact": "2026-04-19T08:08:43.095813",
+  "interval_hours": 6.32,
+  "emotion_at_schedule": {
+    "affection": 59,
+    "trust": 53,
+    "possessiveness": 33,
+    "patience": 60
+  },
+  "scheduled_at": "2026-04-18T20:02:34.354458"
+}

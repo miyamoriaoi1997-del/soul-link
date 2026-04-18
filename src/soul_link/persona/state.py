@@ -203,6 +203,9 @@ class EmotionStateManager:
             except (ValueError, TypeError):
                 pass  # Invalid timestamp, skip decay
         
+        # Compute emotion_score from four dimensions
+        current_state["emotion_score"] = self.calculator.compute_emotion_score(current_state)
+        
         return current_state
     
     def update_emotion_state(

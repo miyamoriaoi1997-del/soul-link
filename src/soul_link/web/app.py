@@ -51,10 +51,14 @@ def create_app(engine: Optional[SoulLinkEngine] = None, config: Optional[SoulLin
 
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request):
-        return templates.TemplateResponse("index.html", {
-            "request": request,
-            "title": "Soul-Link Dashboard",
-        })
+        return templates.TemplateResponse(
+            request=request,
+            name="index.html",
+            context={
+                "request": request,
+                "title": "Soul-Link Dashboard",
+            }
+        )
 
     # ── API: Config ──
 

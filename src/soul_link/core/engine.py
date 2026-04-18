@@ -58,8 +58,11 @@ class SoulLinkEngine:
 
     def _init_emotion_system(self):
         """Initialize the emotion detection and calculation system."""
-        agent_names = self.config.agent_names or self.persona.get_agent_names()
-        self._emotion_detector = EmotionDetector(agent_names=agent_names)
+        # Build agent profile from config
+        agent_profile = {
+            "names": self.config.agent_names or self.persona.get_agent_names(),
+        }
+        self._emotion_detector = EmotionDetector(agent_profile=agent_profile)
         self._emotion_calculator = EmotionCalculator(
             baselines=self.config.emotion.baselines
         )
@@ -154,8 +157,11 @@ class SoulLinkEngine:
         if not self._emotion_detector or not self._emotion_calculator:
             return ""
 
+        # Wrap string message into message list format
+        messages = [{"role": "user", "content": user_message}]
+        
         # Detect trigger
-        event = self._emotion_detector.detect_emotion_event(user_message)
+        event = self._emotion_detector.detect_emotion_event(messages)
 
         if not self._current_state:
             self._load_state()
@@ -164,13 +170,47 @@ class SoulLinkEngine:
 
         if event:
             # Apply time decay first
-            self._emotion_calculator.apply_time_decay(state)
+            from datetime import datetime
+            last_update = datetime.fromisoformat(state.last_update) if state.last_update else datetime.now()
+            
+            # Build emotion dict for decay (only 4 dimensions)
+            emotion_dict = {
+                "affection": state.affection,
+                "trust": state.trust,
+                "possessiveness": state.possessiveness,
+                "patience": state.patience,
+            }
+            decayed = self._emotion_calculator.apply_decay(emotion_dict, last_update)
+            
+            # Update state with decayed values
+            state.affection = decayed["affection"]
+            state.trust = decayed["trust"]
+            state.possessiveness = decayed["possessiveness"]
+            state.patience = decayed["patience"]
 
             # Apply emotion deltas
-            self._emotion_calculator.apply_deltas(state, event.deltas)
+            emotion_dict_for_deltas = {
+                "affection": state.affection,
+                "trust": state.trust,
+                "possessiveness": state.possessiveness,
+                "patience": state.patience,
+            }
+            updated = self._emotion_calculator.apply_deltas(emotion_dict_for_deltas, event.deltas)
+            
+            # Update state with new values
+            state.affection = updated["affection"]
+            state.trust = updated["trust"]
+            state.possessiveness = updated["possessiveness"]
+            state.patience = updated["patience"]
 
             # Update emotion score
-            state.emotion_score = self._emotion_calculator.compute_emotion_score(state)
+            emotion_dict_for_score = {
+                "affection": state.affection,
+                "trust": state.trust,
+                "possessiveness": state.possessiveness,
+                "patience": state.patience,
+            }
+            state.emotion_score = self._emotion_calculator.compute_emotion_score(emotion_dict_for_score)
             state.current_emotion = state.emotion_score
             state.last_update = datetime.now().isoformat()
 
@@ -181,13 +221,19 @@ class SoulLinkEngine:
             self._save_state()
 
             logger.info(
-                f"Emotion event: {event.trigger_type} ({event.intensity}) "
+                f"Emotion event: {event.trigger_type} ({getattr(event, 'intensity', 'moderate')}) "
                 f"-> aff={state.affection} trust={state.trust} "
                 f"poss={state.possessiveness} pat={state.patience}"
             )
 
         # Generate tone modifiers
-        tone = self._emotion_calculator.get_tone_modifiers(state)
+        emotion_dict_for_tone = {
+            "affection": state.affection,
+            "trust": state.trust,
+            "possessiveness": state.possessiveness,
+            "patience": state.patience,
+        }
+        tone = self._emotion_calculator.get_tone_modifiers(emotion_dict_for_tone)
         if isinstance(tone, dict):
             return self._format_tone_modifier(tone)
         elif isinstance(tone, str):
@@ -223,16 +269,15 @@ class SoulLinkEngine:
             return ""
 
         try:
-            state_dict = {
-                "affection": self._current_state.affection,
-                "trust": self._current_state.trust,
-                "possessiveness": self._current_state.possessiveness,
-                "patience": self._current_state.patience,
-            }
+            # Build messages list from history + current user message
+            messages = []
+            if history:
+                messages.extend(history)
+            messages.append({"role": "user", "content": user_message})
+            
             return self._behavior_controller.get_behavior_directive(
-                emotion_state=state_dict,
-                user_message=user_message,
-                conversation_history=history,
+                emotion_state=self._current_state,
+                messages=messages,
             )
         except Exception as e:
             logger.error(f"Behavior strategy error: {e}")
@@ -246,7 +291,8 @@ class SoulLinkEngine:
                 f"[好感:{state.affection} 信任:{state.trust} "
                 f"占有:{state.possessiveness} 耐心:{state.patience}]"
             )
-            intensity_tag = f"[{event.intensity}] " if event.intensity != "moderate" else ""
+            intensity = getattr(event, 'intensity', 'moderate')
+            intensity_tag = f"[{intensity}] " if intensity != "moderate" else ""
             line = f"{timestamp} | {event.trigger_type} | {intensity_tag}{event.context} {snapshot}"
             self.persona.append_moment(line)
         except Exception as e:

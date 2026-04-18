@@ -11,65 +11,56 @@ from typing import Dict, List, Any, Optional
 from pathlib import Path
 
 from soul_link.behavior.strategies import match_strategy, BehaviorStrategy
-from soul_link.emotion.models import EmotionStateManager
+from soul_link.emotion.models import EmotionState
 
 
 class BehaviorStrategyController:
     """Controls persona behavior based on emotional state and context.
 
-    This layer sits between EmotionStateManager (what I feel) and
+    This layer sits between emotion state (what I feel) and
     prompt injection (how to express it). It decides:
     "This turn, I should emotionally react as [strategy]."
     """
 
-    def __init__(self, hermes_home: Optional[Path] = None):
-        """Initialize controller.
-
-        Args:
-            hermes_home: Path to ~/.hermes directory
-        """
-        if hermes_home is None:
-            hermes_home = Path.home() / ".hermes"
-
-        self.hermes_home = Path(hermes_home)
-        self.emotion_mgr = EmotionStateManager(hermes_home)
-
+    def __init__(self):
+        """Initialize controller."""
         # Strategy selection log (for debugging)
         self.last_strategy: Optional[BehaviorStrategy] = None
         self.selection_log: List[Dict[str, Any]] = []
 
     def get_behavior_directive(
         self,
+        emotion_state: EmotionState,
         messages: Optional[List[Dict[str, Any]]] = None,
     ) -> str:
         """Get behavior directive for current turn.
 
         This is the main entry point. It:
-        1. Gets current emotion state
-        2. Analyzes recent context
-        3. Selects best strategy
-        4. Generates explicit directive text
+        1. Analyzes recent context
+        2. Selects best strategy
+        3. Generates explicit directive text
 
         Args:
+            emotion_state: Current emotion state
             messages: Recent conversation messages for context analysis
 
         Returns:
             Formatted behavior directive string to inject into prompt
         """
-        # 1. Get current emotion state
-        emotion_state = self.emotion_mgr.get_current_emotion_state()
+        # 1. Convert EmotionState to dict for strategy matching
+        emotion_dict = emotion_state.to_dict()
 
         # 2. Analyze context
         context = self._analyze_context(messages or [])
 
         # 3. Select strategy
-        strategy = match_strategy(emotion_state, context)
+        strategy = match_strategy(emotion_dict, context)
 
         # 4. Log selection
-        self._log_selection(strategy, emotion_state, context)
+        self._log_selection(strategy, emotion_dict, context)
 
         # 5. Generate directive
-        directive = self._format_directive(strategy, emotion_state)
+        directive = self._format_directive(strategy, emotion_dict)
 
         return directive
 
